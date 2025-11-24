@@ -85,7 +85,7 @@ const Home = () => {
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-primary">
-                      ${product.price}
+                      UGX {(product.price * 3700).toLocaleString()}
                     </span>
                     <Button 
                       onClick={() => addToCart(product)}
