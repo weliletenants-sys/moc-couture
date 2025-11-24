@@ -29,6 +29,7 @@ const Admin = () => {
     price: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { items } = useCart();
@@ -127,6 +128,7 @@ const Admin = () => {
 
       setNewProduct({ name: "", description: "", price: "" });
       setImageFile(null);
+      setImagePreview(null);
       fetchProducts();
     } catch (error: any) {
       toast({
@@ -165,6 +167,21 @@ const Admin = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+    
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
@@ -194,51 +211,71 @@ const Admin = () => {
         </div>
 
         {/* Add Product Form */}
-        <Card className="p-6 mb-8">
-          <h2 className="text-2xl font-display font-bold mb-4">Add New Product</h2>
-          <form onSubmit={handleAddProduct} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Product Name</Label>
-                <Input
-                  id="name"
-                  value={newProduct.name}
-                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                  required
-                />
+        <Card className="p-6 mb-8 border-2">
+          <h2 className="text-2xl font-display font-bold mb-6">Add New Product</h2>
+          <form onSubmit={handleAddProduct} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Product Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Enter product name"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price (USD)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe your product"
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                    className="min-h-[120px]"
+                    required
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">Price (USD)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={newProduct.price}
-                  onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                  required
-                />
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="image">Product Image</Label>
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    required
+                  />
+                </div>
+                {imagePreview && (
+                  <div className="border-2 border-dashed rounded-lg p-4 bg-muted/20">
+                    <p className="text-sm text-muted-foreground mb-2">Preview:</p>
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-64 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={newProduct.description}
-                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="image">Product Image</Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                required
-              />
-            </div>
-            <Button type="submit" className="bg-gradient-warm hover:opacity-90">
+            
+            <Button type="submit" className="w-full md:w-auto bg-gradient-warm hover:opacity-90">
               <Plus className="mr-2 h-4 w-4" />
               Add Product
             </Button>
@@ -247,30 +284,46 @@ const Admin = () => {
 
         {/* Products List */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-display font-bold">Existing Products</h2>
-          {products.map((product) => (
-            <Card key={product.id} className="p-6">
-              <div className="flex gap-6">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-32 h-32 object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <h3 className="text-xl font-display font-semibold mb-2">{product.name}</h3>
-                  <p className="text-muted-foreground mb-2">{product.description}</p>
-                  <p className="text-lg font-bold text-primary">UGX {(product.price * 3700).toLocaleString()}</p>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDeleteProduct(product.id, product.image_url)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-display font-bold">Existing Products</h2>
+            <p className="text-muted-foreground">{products.length} product{products.length !== 1 ? 's' : ''}</p>
+          </div>
+          
+          {products.length === 0 ? (
+            <Card className="p-12 text-center">
+              <p className="text-muted-foreground text-lg">No products yet. Add your first product above!</p>
             </Card>
-          ))}
+          ) : (
+            <div className="grid gap-4">
+              {products.map((product) => (
+                <Card key={product.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full md:w-40 h-40 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-xl font-display font-semibold mb-2">{product.name}</h3>
+                      <p className="text-muted-foreground mb-3 line-clamp-2">{product.description}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <p className="text-lg font-bold text-primary">UGX {(product.price * 3700).toLocaleString()}</p>
+                        <span className="text-sm text-muted-foreground">(${product.price.toFixed(2)} USD)</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteProduct(product.id, product.image_url)}
+                      className="self-start"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
