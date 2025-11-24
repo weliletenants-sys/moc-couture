@@ -28,6 +28,9 @@ const Home = () => {
         </div>
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto animate-fade-in">
+          <div className="text-6xl md:text-8xl font-display font-bold mb-4 text-primary tracking-tight">
+            MoC Couture
+          </div>
           <h1 className="text-5xl md:text-7xl font-bold font-display mb-6 text-foreground">
             Handcrafted with <span className="text-gradient">Love</span>
           </h1>
